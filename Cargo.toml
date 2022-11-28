@@ -1,0 +1,14 @@
+[package]
+name = "birdbrain"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serenity = { version = "0.11.5", features = ["client"] }
+tokio = { version = "1", features = ["full"] }
+markov-chain = "0.1"
+tracing = "0.1"
+reqwest = "0.11.13"
+serde = "1.0.147"
