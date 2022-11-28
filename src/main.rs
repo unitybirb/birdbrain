@@ -13,18 +13,46 @@ use serenity::model::channel::Message;
 use serenity::model::guild::Member;
 use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{StandardFramework, CommandResult};
-use tracing::{info, debug};
 
 #[group]
-#[commands(fursona, markov, socials, stream, logs, derpi)]
+#[commands(fursona, markov, socials, stream, logs, derpi, E621)]
 struct General;
 
 struct Handler;
 
 #[derive(Deserialize)]
-struct e621_object {
-    
+struct E621Object {
+    id: i64,
+    file: E621File,
+    score: E621Score,
+    tags: E621Tags,
+    description: String,
+    fav_count: i32,
 }
+
+#[derive(Deserialize)] 
+struct E621Response {
+    posts: Vec<E621Object>
+}
+
+#[derive(Deserialize)] 
+struct E621Tags {
+    general:  Vec<String>,
+    species:  Vec<String>,
+    artist: Vec<String>
+}
+
+#[derive(Deserialize)]
+struct E621File {
+    url: Option<String>
+}
+
+#[derive(Deserialize)]
+struct E621Score {
+    down: i32,
+    total:i32
+}
+
 #[derive(Deserialize, Debug)]
 struct DerpiObject {
     id: i32,
@@ -71,8 +99,7 @@ async fn main() {
         .configure(|c| c.prefix("!"))
         .group(&GENERAL_GROUP);
 
-    // let token = env::var("DISCORD_TOKEN").expect("token"); 
-    let token = "MTA0NjQzNDAwMzAzODc4MTQ3MQ.G9xRga.lt4szJ73LjNp-RZuri3vLnKNwT5ShpAI9FGnqA";
+    let token = env::var("DISCORD_TOKEN").expect("token");
     let intents = GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT | GatewayIntents::GUILDS | GatewayIntents::GUILD_MEMBERS;
     let mut client = Client::builder(token, intents)
         .event_handler(Handler)
@@ -129,10 +156,48 @@ async fn derpi (ctx: &Context, msg: &Message) -> CommandResult {
         Ok(object_list) => &object_list.images,
         Err(error) =>  panic!("Deserialization failed with error {}", &error)
     };
-    let received_picture = &deserialized.get(rand::thread_rng().gen_range(0..deserialized.len())).expect("Couldn't receive picture");
+    let received_picture = deserialized.get(get_random_number(deserialized.len())).expect("Couldn't receive picture");
     let artist = &received_picture.tags.iter().find(|x| x.starts_with("artist:")).expect("Couldn't extract artist")[7..];
     msg.reply(ctx, format!("Found image {} by {}. Its score is {} with {} downvotes and {} faves.\n{}",
-        &received_picture.id, &artist, &received_picture.score, &received_picture.downvotes, &received_picture.faves, &received_picture.view_url)).await?;
-    msg.reply(ctx, format!("Description: {}", &received_picture.description[..1987])).await.expect("Description too long");
+        &received_picture.id, &artist, &received_picture.score, &received_picture.downvotes, &received_picture.faves, &received_picture.view_url)).await.expect("Couldn't post image");
+    msg.reply(ctx, format!("Description: {}", &received_picture.description[..get_description_max(&received_picture.description)])).await.unwrap();
     Ok(())
+}
+
+#[command]
+async fn e621 (ctx: &Context, msg: &Message) -> CommandResult {
+    let client = reqwest::Client::new();
+    let querystring = &msg.content[5..];
+    let url = format!("https://e621.net/posts.json?tags={query}", query = &querystring);
+    let response = client.get(&url).header(USER_AGENT, "Birdbrain").send().await.expect("Couldn't get response");
+    let e621_object_list: Result<E621Response, Error> = response.json().await;
+    let deserialized = match e621_object_list {
+        Ok(object_list) => object_list.posts,
+        Err(error) =>  panic!("Deserialization failed with error {}", &error)
+    };
+    let filtered: Vec<&E621Object> = deserialized.iter().filter(|post| post.file.url.is_some()).collect();
+    let received_picture = filtered.get(get_random_number(deserialized.len())).expect("Couldn't receive picture");
+    let artists = &received_picture.tags.artist;
+    let artist = match &artists.len() {
+        0 => String::from("no artist"),
+        _ => artists.get(0).unwrap().to_owned()
+    };
+    let description = &received_picture.description;
+    let url = received_picture.file.url.as_ref().unwrap();
+    msg.reply(ctx, format!("Found image {} by {}. Its score is {} with {} downvotes and {} faves.\n{}",
+        &received_picture.id, artist,  &received_picture.score.total, &received_picture.score.down, &received_picture.fav_count, url)).await.expect("Couldn't post image");
+    msg.reply(ctx, format!("Description: {}", &description[..get_description_max(&description)])).await.unwrap();
+    Ok(())
+}
+
+fn get_random_number(max: usize) -> usize {
+   return rand::thread_rng().gen_range(0..max)
+}
+
+fn get_description_max(description: &str) -> usize {
+    if &description.len() > &1987 {
+        1987
+    } else {
+        description.len()
+    }
 }
