@@ -11,7 +11,8 @@ use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
 use serenity::model::channel::Message;
 use serenity::model::guild::Member;
-use serenity::model::prelude::Ready;
+use serenity::model::prelude::{GuildId, Ready};
+use serenity::model::user::User;
 use serenity::prelude::*;
 
 use crate::links::Socials;
@@ -80,6 +81,37 @@ impl EventHandler for Handler {
                 .await
                 .expect("Failed while sending message");
         }
+    }
+
+    async fn guild_member_removal(
+        &self,
+        ctx: Context,
+        guild_id: GuildId,
+        user: User,
+        _member_data_if_available: Option<Member>,
+    ) {
+        let guild = guild_id
+            .to_partial_guild(&ctx)
+            .await
+            .expect("Failed while getting guild");
+        let system_channel_id = guild
+            .system_channel_id
+            .expect("Failed while getting system channel id");
+        guild
+            .channels(&ctx)
+            .await
+            .expect("Failed while getting guild channels")
+            .get(&system_channel_id)
+            .expect("Failed while getting welcome channel")
+            .say(
+                &ctx,
+                format!(
+                    "**[LEAVE]** {} has been found dead behind a dumpster",
+                    user.name
+                ),
+            )
+            .await
+            .expect("Failed while sending leave message");
     }
 
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
