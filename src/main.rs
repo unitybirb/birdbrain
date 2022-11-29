@@ -11,7 +11,9 @@ use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
 use serenity::model::channel::Message;
 use serenity::model::guild::Member;
-use serenity::model::prelude::{GuildChannel, GuildId, PartialGuild, PartialGuildChannel, Ready};
+use serenity::model::prelude::{
+    ChannelId, GuildChannel, GuildId, MessageId, Ready,
+};
 use serenity::model::user::User;
 use serenity::prelude::*;
 
@@ -109,7 +111,8 @@ impl EventHandler for Handler {
         user: User,
         _member_data_if_available: Option<Member>,
     ) {
-        get_system_channel(&ctx, &guild_id).await
+        get_system_channel(&ctx, &guild_id)
+            .await
             .say(
                 &ctx,
                 format!(
@@ -123,7 +126,8 @@ impl EventHandler for Handler {
     }
 
     async fn guild_ban_addition(&self, ctx: Context, guild_id: GuildId, banned_user: User) {
-        get_system_channel(&ctx, &guild_id).await
+        get_system_channel(&ctx, &guild_id)
+            .await
             .say(
                 &ctx,
                 format!(
@@ -134,6 +138,40 @@ impl EventHandler for Handler {
             )
             .await
             .expect("Failed while sending leave message");
+    }
+
+    /* Find out how to repost deleted message */
+    async fn message_delete(
+        &self,
+        ctx: Context,
+        channel_id: ChannelId,
+        deleted_message_id: MessageId,
+        guild_id: Option<GuildId>,
+    ) {
+        let partial_guild = guild_id
+            .expect("Guild not found")
+            .to_partial_guild(&ctx)
+            .await
+            .expect("Conversion to partial guild failed");
+        let channels = &partial_guild
+            .channels(&ctx)
+            .await
+            .expect("Getting channels failed");
+        let found_channels: Vec<&GuildChannel> =
+            channels.values().filter(|x| x.name() == "logs").collect();
+
+        match found_channels.get(0) {
+            Some(found_channel) => found_channel
+                .send_message(&ctx, |msg| {
+                    msg.content(format!(
+                        "Someone just deleted a post in <#{}>, [ID: {}]",
+                        &channel_id.0, &deleted_message_id.0
+                    ))
+                })
+                .await
+                .expect("Couldn't send message"),
+            None => panic!("Channel not found! Are you sure you have a logs channel?"),
+        };
     }
 }
 
