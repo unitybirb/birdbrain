@@ -1,4 +1,5 @@
 mod links;
+use std::collections::HashMap;
 use std::{env};
 
 use markov_chain::Chain;
@@ -13,6 +14,8 @@ use serenity::model::channel::Message;
 use serenity::model::guild::Member;
 use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{StandardFramework, CommandResult};
+
+use crate::links::Socials;
 
 #[group]
 #[commands(fursona, markov, socials, stream, logs, derpi, E621)]
@@ -118,6 +121,7 @@ async fn fursona(ctx: &Context, msg: &Message) -> CommandResult {
     Ok(())
 }
 
+/* TODO */
 #[command]
 async fn markov(ctx: &Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "cum").await?;
@@ -128,7 +132,13 @@ async fn markov(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn socials (ctx: &Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, links::get_link_string()).await?;
+    let mut socials = Socials { social_vec: vec![
+        ("Mastodon", "https://tech.lgbt/@bird"), 
+        ("Twitter", "https://twitter.com/unitybirb"),
+        ("Tumblr",  "https://unity-birdposts.tumblr.com"),
+        ("Cohost", "https://cohost.org/unitybirb")
+    ]};
+    msg.reply(ctx, socials.get_link_string()).await?;
     Ok(())
 }
 

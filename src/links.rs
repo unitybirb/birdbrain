@@ -1,13 +1,13 @@
-use std::collections::HashMap;
+pub struct Socials<'a> {
+    pub social_vec: Vec<(&'a str, &'a str)>
+}
 
-pub fn get_link_string() -> String{
-    let social_links: HashMap<&str, &str> = HashMap::from([
-        ("Mastodon", "https://tech.lgbt/@bird"), 
-        ("Twitter", "https://twitter.com/unitybirb"),
-        ("Tumblr",  "https://unity-birdposts.tumblr.com"),
-        ("Cohost", "https://cohost.org/unitybirb")
-    ]);
-    let mut str =  String::new();
-    social_links.iter().for_each(|link| str.push_str(&format!("{}: {}\n", link.0, link.1)));
-    str
+impl Socials<'_> {
+
+    pub fn get_link_string(&mut self) -> String {
+        self.social_vec.sort();
+        let mut str = String::new();
+        self.social_vec.iter().for_each(|link| str.push_str(&format!("{}: {}\n", link.0, link.1)));
+        str 
+    }
 }
