@@ -71,6 +71,7 @@ version = "0.1.0"
 dependencies = [
  "markov-chain",
  "once_cell",
+ "rand 0.8.5",
  "reqwest",
  "serde",
  "serenity",
