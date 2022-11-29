@@ -83,6 +83,36 @@ impl EventHandler for Handler {
         }
     }
 
+    async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
+        let guild = new_member
+            .guild_id
+            .to_partial_guild(&ctx)
+            .await
+            .expect("Failed while getting guild");
+        let system_channel_id = guild
+            .system_channel_id
+            .expect("Failed while getting system channel id");
+        guild
+            .channels(&ctx)
+            .await
+            .expect("Failed while getting guild channels")
+            .get(&system_channel_id)
+            .expect("Failed while getting welcome channel")
+            .say(
+                &ctx,
+                format!(
+                    "**[JOIN]** Welcome to the cum zone {}",
+                    new_member.display_name()
+                ),
+            )
+            .await
+            .expect("Failed while sending welcome message");
+    }
+
+    async fn ready(&self, _: Context, ready: Ready) {
+        println!("{} is connected!", ready.user.name);
+    }
+
     async fn guild_member_removal(
         &self,
         ctx: Context,
@@ -112,36 +142,6 @@ impl EventHandler for Handler {
             )
             .await
             .expect("Failed while sending leave message");
-    }
-
-    async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        let guild = new_member
-            .guild_id
-            .to_partial_guild(&ctx)
-            .await
-            .expect("Failed while getting guild");
-        let system_channel_id = guild
-            .system_channel_id
-            .expect("Failed while getting system channel id");
-        guild
-            .channels(&ctx)
-            .await
-            .expect("Failed while getting guild channels")
-            .get(&system_channel_id)
-            .expect("Failed while getting welcome channel")
-            .say(
-                &ctx,
-                format!(
-                    "Welcome to the cum zone {}",
-                    new_member.nick.expect("Failed while getting username")
-                ),
-            )
-            .await
-            .expect("Failed while sending welcome message");
-    }
-
-    async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
     }
 }
 
