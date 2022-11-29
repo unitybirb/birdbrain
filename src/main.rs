@@ -101,8 +101,9 @@ impl EventHandler for Handler {
             .say(
                 &ctx,
                 format!(
-                    "**[JOIN]** Welcome to the cum zone {}",
-                    new_member.display_name()
+                    "**[JOIN]** Welcome to the bird zone, {}`[{}]`!",
+                    new_member.display_name(),
+                    new_member.distinct()
                 ),
             )
             .await
@@ -136,8 +137,35 @@ impl EventHandler for Handler {
             .say(
                 &ctx,
                 format!(
-                    "**[LEAVE]** {} has been found dead behind a dumpster",
-                    user.name
+                    "**[LEAVE]** {username} `[{username}#{discriminator}]` has been found dead behind a dumpster.",
+                    username = user.name,
+                    discriminator = user.discriminator
+                ),
+            )
+            .await
+            .expect("Failed while sending leave message");
+    }
+
+    async fn guild_ban_addition(&self, ctx: Context, guild_id: GuildId, banned_user: User) {
+        let guild = guild_id
+            .to_partial_guild(&ctx)
+            .await
+            .expect("Failed while getting guild");
+        let system_channel_id = guild
+            .system_channel_id
+            .expect("Failed while getting system channel id");
+        guild
+            .channels(&ctx)
+            .await
+            .expect("Failed while getting guild channels")
+            .get(&system_channel_id)
+            .expect("Failed while getting welcome channel")
+            .say(
+                &ctx,
+                format!(
+                    "**[BAN]** {username} `[{username}#{discriminator}]` has been executed for crimes against aviankind.",
+                    username = banned_user.name,
+                    discriminator = banned_user.discriminator
                 ),
             )
             .await
