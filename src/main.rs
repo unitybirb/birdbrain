@@ -11,9 +11,7 @@ use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
 use serenity::model::channel::Message;
 use serenity::model::guild::Member;
-use serenity::model::prelude::{
-    ChannelId, GuildChannel, GuildId, MessageId, Ready,
-};
+use serenity::model::prelude::{ChannelId, GuildChannel, GuildId, MessageId, Ready};
 use serenity::model::user::User;
 use serenity::prelude::*;
 
