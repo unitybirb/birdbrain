@@ -24,12 +24,12 @@ struct Handler;
 
 #[derive(Deserialize)]
 struct E621Object {
-    id: i64,
+    id: u32,
     file: E621File,
     score: E621Score,
     tags: E621Tags,
     description: String,
-    fav_count: i32,
+    fav_count: u32,
 }
 
 #[derive(Deserialize)] 
@@ -52,14 +52,14 @@ struct E621File {
 #[derive(Deserialize)]
 struct E621Score {
     down: i32,
-    total:i32
+    total:u32
 }
 
 #[derive(Deserialize)]
 struct DerpiObject {
-    id: i32,
+    id: u32,
     score: i32,
-    faves: i32,
+    faves: u32,
     downvotes: i32,
     description: String,
     tags: Vec<String>,
@@ -153,7 +153,6 @@ async fn logs (ctx: &Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "https://www.fflogs.com/character/id/13439791").await?;
     Ok(())
 }
-
 
 #[command]
 async fn derpi (ctx: &Context, msg: &Message) -> CommandResult {
