@@ -186,16 +186,16 @@ async fn e621 (ctx: &Context, msg: &Message) -> CommandResult {
     let url = received_picture.file.url.as_ref().unwrap();
     msg.reply(ctx, format!("Found image {} by {}. Its score is {} with {} downvotes and {} faves.\n{}",
         &received_picture.id, artist,  &received_picture.score.total, &received_picture.score.down, &received_picture.fav_count, url)).await.expect("Couldn't post image");
-    msg.reply(ctx, format!("Description: {}", &description[..get_description_max(&description)])).await.unwrap();
+    msg.reply(ctx, format!("Description: {}", &description[..get_description_max(description)])).await.unwrap();
     Ok(())
 }
 
 fn get_random_number(max: usize) -> usize {
-   return rand::thread_rng().gen_range(0..max)
+   rand::thread_rng().gen_range(0..max)
 }
 
 fn get_description_max(description: &str) -> usize {
-    if &description.len() > &1987 {
+    if description.len() > 1987 {
         1987
     } else {
         description.len()
