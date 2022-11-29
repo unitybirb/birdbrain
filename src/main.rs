@@ -1,5 +1,4 @@
 mod links;
-use std::collections::HashMap;
 use std::{env};
 
 use markov_chain::Chain;
@@ -8,7 +7,7 @@ use reqwest::Error;
 use reqwest::header::USER_AGENT;
 use serde::Deserialize;
 use serenity::async_trait;
-use serenity::model::prelude::{ChannelId, Ready};
+use serenity::model::prelude::{Ready};
 use serenity::prelude::*;
 use serenity::model::channel::Message;
 use serenity::model::guild::Member;
@@ -81,14 +80,13 @@ impl EventHandler for Handler {
     }
 
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-            new_member.guild_id.channels(&ctx)
-            .await
-            .expect("Failed while receiving list of channels")
-            .get(&ChannelId(998225684612796526))
-            .expect("Failed while getting welcome channel")
+            let guild = new_member.guild_id.to_partial_guild(&ctx)
+            .await.expect("Failed while getting guild");
+            let system_channel_id = guild.system_channel_id.expect("Failed while getting system channel id");
+            guild.channels(&ctx).await.expect("Failed while getting guild channels")
+            .get(&system_channel_id).expect("Failed while getting welcome channel")
             .say(&ctx, format!("Welcome to the cum zone {}", new_member.nick.expect("Failed while getting username")))
-            .await
-            .expect("Failed while sending welcome message");
+            .await.expect("Failed while sending welcome message");
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
