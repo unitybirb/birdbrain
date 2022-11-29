@@ -1,5 +1,5 @@
 mod links;
-use std::{env};
+use std::{env, cmp};
 
 use markov_chain::Chain;
 use rand::prelude::*;
@@ -17,7 +17,7 @@ use serenity::framework::standard::{StandardFramework, CommandResult};
 use crate::links::Socials;
 
 #[group]
-#[commands(fursona, markov, socials, stream, logs, derpi, e621)]
+#[commands(fursona, markov, socials, stream, logs, derpi, e621, help)]
 struct General;
 
 struct Handler;
@@ -122,9 +122,11 @@ async fn fursona(ctx: &Context, msg: &Message) -> CommandResult {
 /* TODO */
 #[command]
 async fn markov(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "cum").await?;
+    let mut generated_text = String::new();
     let mut chain:Chain<&str> = Chain::new(3);
     chain.train(vec![]);
+    chain.generate().iter().for_each(|generated| generated_text.push_str(&format!("{} ", generated)));
+    msg.reply(&ctx, generated_text).await.expect("Couldn't send message");
     Ok(())
 }
 
@@ -174,7 +176,7 @@ async fn derpi (ctx: &Context, msg: &Message) -> CommandResult {
     let artist = &received_picture.tags.iter().find(|x| x.starts_with("artist:")).expect("Couldn't extract artist")[7..];
     msg.reply(ctx, format!("Found image {} by {}. Its score is {} with {} downvotes and {} faves.\n{}",
         &received_picture.id, &artist, &received_picture.score, &received_picture.downvotes, &received_picture.faves, &received_picture.view_url)).await.expect("Couldn't post image");
-    msg.reply(ctx, format!("Description: {}", &received_picture.description[..get_description_max(&received_picture.description)])).await.unwrap();
+    msg.reply(ctx, format!("Description: {}", &received_picture.description[..get_description_max(&received_picture.description)])).await.expect("Couldn't post message");
     Ok(())
 }
 
@@ -206,7 +208,22 @@ async fn e621 (ctx: &Context, msg: &Message) -> CommandResult {
     let url = received_picture.file.url.as_ref().unwrap();
     msg.reply(ctx, format!("Found image {} by {}. Its score is {} with {} downvotes and {} faves.\n{}",
         &received_picture.id, artist,  &received_picture.score.total, &received_picture.score.down, &received_picture.fav_count, url)).await.expect("Couldn't post image");
-    msg.reply(ctx, format!("Description: {}", &description[..get_description_max(description)])).await.unwrap();
+    msg.reply(ctx, format!("Description: {}", &description[..get_description_max(description)])).await.expect("Couldn't post message");
+    Ok(())
+}
+
+#[command]
+async fn help(ctx: &Context, msg: &Message) -> CommandResult {
+    let response = match &msg.content[cmp::min(6, msg.content.len())..] {
+        "socials" => "Posts all of my available social media",
+        "fursona" => "Posts a link to my fursona reference",
+        "stream" => "Posts a link to my stream",
+        "logs" => "Posts a link to my FFLogs page",
+        "e621" => "Queries e621 with your given tags. Usage: !e621 [tag1] [tag2]",
+        "derpi" => "Queries Derpibooru with your given tags. Usage: !derpi [tag1], [tag2]",
+        _ => "The following commands are available: !socials, !fursona, !stream, !logs, !e621 and !derpi"
+    };
+    msg.reply(ctx, response).await.expect("Cound't post message");
     Ok(())
 }
 
