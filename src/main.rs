@@ -196,16 +196,10 @@ async fn e621 (ctx: &Context, msg: &Message) -> CommandResult {
         Err(error) =>  panic!("Deserialization failed with error {}", &error)
     };
     let filtered: Vec<&E621Object> = deserialized.iter().filter(|post| post.file.url.is_some()).collect();
-    let received_picture = match filtered.get(get_random_number(deserialized.len())) {
-        Some(pic) => pic,
-        None => {
-            msg.reply(&ctx, "Couldn't find any images! Are you sure your tags exist?").await.expect("Couldn't send error message");
-            return Ok(())
-        }
-    };
+    let received_picture = filtered.get(get_random_number(deserialized.len())).expect("Couldn't get image");
     let artists = &received_picture.tags.artist;
     let artist = match &artists.len() {
-        0 => String::from("no artist"),
+        0 => String::from("unknown artist"),
         _ => artists.get(0).unwrap().to_owned()
     };
     let description = &received_picture.description;
