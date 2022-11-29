@@ -17,7 +17,7 @@ use serenity::framework::standard::{StandardFramework, CommandResult};
 use crate::links::Socials;
 
 #[group]
-#[commands(fursona, markov, socials, stream, logs, derpi, e621, help)]
+#[commands(fursona, socials, stream, logs, derpi, e621, help)]
 struct General;
 
 struct Handler;
@@ -55,7 +55,7 @@ struct E621Score {
     total:i32
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 struct DerpiObject {
     id: i32,
     score: i32,
@@ -66,7 +66,7 @@ struct DerpiObject {
     view_url: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 struct DerpiResponse {
     images: Vec<DerpiObject>
 }
