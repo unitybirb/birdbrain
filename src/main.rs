@@ -17,7 +17,7 @@ use serenity::framework::standard::{StandardFramework, CommandResult};
 use crate::links::Socials;
 
 #[group]
-#[commands(fursona, markov, socials, stream, logs, derpi, E621)]
+#[commands(fursona, markov, socials, stream, logs, derpi, e621)]
 struct General;
 
 struct Handler;
