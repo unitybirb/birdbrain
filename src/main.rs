@@ -161,10 +161,16 @@ async fn derpi (ctx: &Context, msg: &Message) -> CommandResult {
     let response = client.get(&url).header(USER_AGENT, "Birdbrain").send().await.expect("Couldn't get response");
     let derpi_object_list: Result<DerpiResponse, Error> = response.json().await;
     let deserialized = match &derpi_object_list {
-        Ok(object_list) => &object_list.images,
+        Ok(object_list) => match object_list.images.len() {
+            0 => {
+                msg.reply(&ctx, "Couldn't find any images! Are you sure the tags you're looking for exist?").await.expect("Couldn't send error message");
+                return Ok(())
+            }
+            _ => &object_list.images,
+        }
         Err(error) =>  panic!("Deserialization failed with error {}", &error)
     };
-    let received_picture = deserialized.get(get_random_number(deserialized.len())).expect("Couldn't receive picture");
+    let received_picture = &deserialized.get(get_random_number(deserialized.len())).expect("Couldn't get image");
     let artist = &received_picture.tags.iter().find(|x| x.starts_with("artist:")).expect("Couldn't extract artist")[7..];
     msg.reply(ctx, format!("Found image {} by {}. Its score is {} with {} downvotes and {} faves.\n{}",
         &received_picture.id, &artist, &received_picture.score, &received_picture.downvotes, &received_picture.faves, &received_picture.view_url)).await.expect("Couldn't post image");
@@ -179,12 +185,24 @@ async fn e621 (ctx: &Context, msg: &Message) -> CommandResult {
     let url = format!("https://e621.net/posts.json?tags={query}", query = &querystring);
     let response = client.get(&url).header(USER_AGENT, "Birdbrain").send().await.expect("Couldn't get response");
     let e621_object_list: Result<E621Response, Error> = response.json().await;
-    let deserialized = match e621_object_list {
-        Ok(object_list) => object_list.posts,
+    let deserialized = match &e621_object_list {
+        Ok(object_list) => match object_list.posts.len() {
+            0 => {
+                msg.reply(&ctx, "Couldn't find any images! Are you sure the tags you're looking for exist?").await.expect("Couldn't send error message");
+                return Ok(())
+            }
+            _ => &object_list.posts,
+        }
         Err(error) =>  panic!("Deserialization failed with error {}", &error)
     };
     let filtered: Vec<&E621Object> = deserialized.iter().filter(|post| post.file.url.is_some()).collect();
-    let received_picture = filtered.get(get_random_number(deserialized.len())).expect("Couldn't receive picture");
+    let received_picture = match filtered.get(get_random_number(deserialized.len())) {
+        Some(pic) => pic,
+        None => {
+            msg.reply(&ctx, "Couldn't find any images! Are you sure your tags exist?").await.expect("Couldn't send error message");
+            return Ok(())
+        }
+    };
     let artists = &received_picture.tags.artist;
     let artist = match &artists.len() {
         0 => String::from("no artist"),
