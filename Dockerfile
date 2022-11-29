@@ -5,5 +5,5 @@ RUN cargo build --release --bin birdbrain
 
 FROM rust as runtime
 WORKDIR birdbrain
-COPY --from=builder /birdbrain/target/release/birdbrain /usr/local/bin
-ENTRYPOINT ["./usr/local/bin/birdbrain"]
+COPY --from=builder /birdbrain/target/release/birdbrain ./birdbrain
+ENTRYPOINT ["./birdbrain"]
