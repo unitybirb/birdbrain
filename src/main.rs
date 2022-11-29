@@ -11,7 +11,7 @@ use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
 use serenity::model::channel::Message;
 use serenity::model::guild::Member;
-use serenity::model::prelude::{GuildId, Ready};
+use serenity::model::prelude::{GuildChannel, GuildId, PartialGuild, PartialGuildChannel, Ready};
 use serenity::model::user::User;
 use serenity::prelude::*;
 
@@ -84,20 +84,8 @@ impl EventHandler for Handler {
     }
 
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        let guild = new_member
-            .guild_id
-            .to_partial_guild(&ctx)
+        get_system_channel(&ctx, &new_member.guild_id)
             .await
-            .expect("Failed while getting guild");
-        let system_channel_id = guild
-            .system_channel_id
-            .expect("Failed while getting system channel id");
-        guild
-            .channels(&ctx)
-            .await
-            .expect("Failed while getting guild channels")
-            .get(&system_channel_id)
-            .expect("Failed while getting welcome channel")
             .say(
                 &ctx,
                 format!(
@@ -121,25 +109,13 @@ impl EventHandler for Handler {
         user: User,
         _member_data_if_available: Option<Member>,
     ) {
-        let guild = guild_id
-            .to_partial_guild(&ctx)
-            .await
-            .expect("Failed while getting guild");
-        let system_channel_id = guild
-            .system_channel_id
-            .expect("Failed while getting system channel id");
-        guild
-            .channels(&ctx)
-            .await
-            .expect("Failed while getting guild channels")
-            .get(&system_channel_id)
-            .expect("Failed while getting welcome channel")
+        get_system_channel(&ctx, &guild_id).await
             .say(
                 &ctx,
                 format!(
-                    "**[LEAVE]** {username} `[{username}#{discriminator}]` has been found dead behind a dumpster.",
-                    username = user.name,
-                    discriminator = user.discriminator
+                    "**[LEAVE]** {} `[{}]` has been found dead behind a dumpster.",
+                    user.name,
+                    user.tag()
                 ),
             )
             .await
@@ -147,25 +123,13 @@ impl EventHandler for Handler {
     }
 
     async fn guild_ban_addition(&self, ctx: Context, guild_id: GuildId, banned_user: User) {
-        let guild = guild_id
-            .to_partial_guild(&ctx)
-            .await
-            .expect("Failed while getting guild");
-        let system_channel_id = guild
-            .system_channel_id
-            .expect("Failed while getting system channel id");
-        guild
-            .channels(&ctx)
-            .await
-            .expect("Failed while getting guild channels")
-            .get(&system_channel_id)
-            .expect("Failed while getting welcome channel")
+        get_system_channel(&ctx, &guild_id).await
             .say(
                 &ctx,
                 format!(
-                    "**[BAN]** {username} `[{username}#{discriminator}]` has been executed for crimes against aviankind.",
-                    username = banned_user.name,
-                    discriminator = banned_user.discriminator
+                    "**[BAN]** {} `[{}]` has been executed for crimes against aviankind.",
+                    banned_user.name,
+                    banned_user.tag()
                 ),
             )
             .await
@@ -411,4 +375,21 @@ fn get_description_max(description: &str) -> usize {
     } else {
         description.len()
     }
+}
+
+async fn get_system_channel(ctx: &Context, guild_id: &GuildId) -> GuildChannel {
+    let guild = guild_id
+        .to_partial_guild(&ctx)
+        .await
+        .expect("Failed while getting guild");
+    let system_channel_id = guild
+        .system_channel_id
+        .expect("Failed while getting system channel id");
+    guild
+        .channels(&ctx)
+        .await
+        .expect("Failed while getting guild channels")
+        .get(&system_channel_id)
+        .expect("Failed while getting welcome channel")
+        .to_owned()
 }
