@@ -70,6 +70,7 @@ name = "birdbrain"
 version = "0.1.0"
 dependencies = [
  "markov-chain",
+ "once_cell",
  "reqwest",
  "serde",
  "serenity",

@@ -1,3 +1,5 @@
+mod links;
+
 use std::{env};
 
 use markov_chain::Chain;
@@ -22,7 +24,6 @@ impl EventHandler for Handler {
         if msg.content == "h" && !msg.is_own(&ctx) {
             msg.channel_id.say(&ctx, "h").await.expect("Failed while sending message");
         }
-     
     }
 
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
@@ -47,7 +48,8 @@ async fn main() {
         .configure(|c| c.prefix("!"))
         .group(&GENERAL_GROUP);
 
-    let token = "MTA0NjQzNDAwMzAzODc4MTQ3MQ.G9xRga.lt4szJ73LjNp-RZuri3vLnKNwT5ShpAI9FGnqA";
+    let token = env::var("DISCORD_TOKEN").expect("token"); 
+    // let token = "MTA0NjQzNDAwMzAzODc4MTQ3MQ.G9xRga.lt4szJ73LjNp-RZuri3vLnKNwT5ShpAI9FGnqA";
     let intents = GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT | GatewayIntents::GUILDS | GatewayIntents::GUILD_MEMBERS;
     let mut client = Client::builder(token, intents)
         .event_handler(Handler)
@@ -62,7 +64,7 @@ async fn main() {
 
 #[command]
 async fn fursona(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "Check out my fursona here: https://ref.birdtech.dev/").await?;
+    msg.reply(ctx, "Check out my fursona here: https://ref.birdtech.dev").await?;
     Ok(())
 }
 
@@ -76,7 +78,7 @@ async fn markov(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn socials (ctx: &Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "Mastodon: https://tech.lgbt/@bird\nTwitter: https://twitter.com/unitybirb\nTumblr: https://unity-birdposts.tumblr.com/\nCohost: https://cohost.org/unitybirb").await?;
+    msg.reply(ctx, links::get_link_string()).await?;
     Ok(())
 }
 
