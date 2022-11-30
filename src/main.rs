@@ -138,7 +138,7 @@ impl EventHandler for Handler {
             .expect("Failed while sending leave message");
     }
 
-    /* Find out how to repost deleted message */
+    /* TODO: Find out how to repost deleted message */
     async fn message_delete(
         &self,
         ctx: Context,
@@ -164,6 +164,42 @@ impl EventHandler for Handler {
                     msg.content(format!(
                         "Someone just deleted a post in <#{}>, [ID: {}]",
                         &channel_id.0, &deleted_message_id.0
+                    ))
+                })
+                .await
+                .expect("Couldn't send message"),
+            None => panic!("Channel not found! Are you sure you have a logs channel?"),
+        };
+    }
+
+    async fn guild_member_update(
+        &self,
+        ctx: Context,
+        old_if_available: Option<Member>,
+        new: Member,
+    ) {
+        let partial_guild = &new
+            .guild_id
+            .to_partial_guild(&ctx)
+            .await
+            .expect("Conversion to partial guild failed");
+        let channels = &partial_guild
+            .channels(&ctx)
+            .await
+            .expect("Getting channels failed");
+        let found_channels: Vec<&GuildChannel> =
+            channels.values().filter(|x| x.name() == "logs").collect();
+
+        match found_channels.get(0) {
+            Some(found_channel) => found_channel
+                .send_message(&ctx, |msg| {
+                    msg.content(format!(
+                        "{} just changed their nickname. [{} -> {}]",
+                        &new.distinct(),
+                        old_if_available
+                            .expect("Old member not found")
+                            .display_name(),
+                        new.display_name()
                     ))
                 })
                 .await
