@@ -18,7 +18,7 @@ use serenity::prelude::*;
 use crate::links::Socials;
 
 #[group]
-#[commands(fursona, socials, stream, logs, derpi, e621, help)]
+#[commands(fursona, socials, stream, logs, derpi, e621, help, github)]
 struct General;
 
 struct Handler;
@@ -282,6 +282,12 @@ async fn stream(ctx: &Context, msg: &Message) -> CommandResult {
 async fn logs(ctx: &Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "https://www.fflogs.com/character/id/13439791")
         .await?;
+    Ok(())
+}
+
+#[command]
+async fn github(ctx: &Context, msg: &Message) -> CommandResult {
+    msg.reply(ctx, "hhttps://github.com/unitybirb").await?;
     Ok(())
 }
 
